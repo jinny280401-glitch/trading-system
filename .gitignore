@@ -1,0 +1,17 @@
+# 数据缓存（116MB parquet文件）
+data/cache/*.parquet
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# 扫描/回测输出
+scan_result_*.csv
+portfolio_trades.csv
+backtest_trades.csv
+
+# OS
+.DS_Store
