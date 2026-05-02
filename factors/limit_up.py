@@ -113,7 +113,7 @@ class BelowLimitUpPrice(BaseFactor):
 
         # 跌破幅度 = (涨停价 - 当前价) / 涨停价
         # fillna(0) 防止无涨停历史时除零
-        discount = ((limit_up_price - close) / limit_up_price.replace(0, np.nan)).fillna(0).clip(lower=0)
+        discount = ((limit_up_price - close) / limit_up_price.replace(0, np.nan)).clip(lower=0).fillna(0)
         # 跌破 0~20% 映射到 0~100 分
         score = (discount / 0.20).clip(upper=1.0) * 100
 

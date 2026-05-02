@@ -96,11 +96,11 @@ class BBIBOLLLowerBounce(BaseFactor):
         )
 
         # 前日跌破下轨的深度（越深越好）
-        prev_depth = ((lower.shift(1) - close.shift(1)) / lower.shift(1)).clip(lower=0)
+        prev_depth = ((lower.shift(1) - close.shift(1)) / lower.shift(1).replace(0, np.nan).fillna(0)).clip(lower=0)
         depth_score = (prev_depth / 0.05).clip(upper=1.0) * 50  # 跌破5%封顶50分
 
         # 当日反弹幅度
-        bounce = ((close - close.shift(1)) / close.shift(1)).clip(lower=0)
+        bounce = ((close - close.shift(1)) / close.shift(1).replace(0, np.nan).fillna(0)).clip(lower=0)
         bounce_score = (bounce / 0.03).clip(upper=1.0) * 50  # 反弹3%封顶50分
 
         signal = self.compute(df)

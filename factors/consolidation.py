@@ -52,17 +52,17 @@ class Consolidation(BaseFactor):
         # 1) 振幅：近 N 日 (最高 - 最低) / 最低
         rolling_high = high.rolling(n).max()
         rolling_low = low.rolling(n).min()
-        amplitude = (rolling_high - rolling_low) / rolling_low
+        amplitude = (rolling_high - rolling_low) / rolling_low.replace(0, np.nan).fillna(0)
         narrow_range = amplitude <= self.max_amplitude
 
         # 2) 收盘价贴近均线：|close - MA| / MA <= proximity
         ma = close.rolling(self.ma_period).mean()
-        near_ma = ((close - ma).abs() / ma) <= self.ma_proximity
+        near_ma = (((close - ma).abs() / ma.replace(0, np.nan).fillna(0)) <= self.ma_proximity) | ma.replace(0, np.nan).isna()
 
         # 3) 缩量：近 N 日均量 / 前 N 日均量 <= ratio
         recent_vol = volume.rolling(n).mean()
         prior_vol = volume.shift(n).rolling(n).mean()
-        vol_shrink = (recent_vol / prior_vol) <= self.volume_shrink_ratio
+        vol_shrink = (recent_vol / prior_vol.replace(0, np.nan).fillna(0)) <= self.volume_shrink_ratio
 
         return narrow_range & near_ma & vol_shrink
 
@@ -82,7 +82,7 @@ class Consolidation(BaseFactor):
         # 振幅紧度
         rolling_high = high.rolling(n).max()
         rolling_low = low.rolling(n).min()
-        amplitude = (rolling_high - rolling_low) / rolling_low
+        amplitude = (rolling_high - rolling_low) / rolling_low.replace(0, np.nan).fillna(0)
         # 振幅从 max_amplitude 到 0 映射到 0-40 分
         tightness = ((self.max_amplitude - amplitude) / self.max_amplitude).clip(lower=0, upper=1)
         tightness_score = tightness * 40
@@ -99,7 +99,7 @@ class Consolidation(BaseFactor):
         # 缩量程度
         recent_vol = volume.rolling(n).mean()
         prior_vol = volume.shift(n).rolling(n).mean()
-        vol_ratio = (recent_vol / prior_vol).clip(lower=0.2, upper=1.0)
+        vol_ratio = (recent_vol / prior_vol.replace(0, np.nan).fillna(0)).clip(lower=0.2, upper=1.0)
         # 量比从 1.0 到 0.2 映射到 0-30 分
         shrink_score = ((1.0 - vol_ratio) / 0.8).clip(lower=0, upper=1) * 30
 

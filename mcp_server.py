@@ -28,6 +28,9 @@ sys.path.insert(0, _ROOT)
 
 from mcp.server.fastmcp import FastMCP
 
+# 无法计算时的默认值（如下轨为0或数据异常）
+_DIST_UNAVAILABLE = 999.9
+
 mcp = FastMCP(
     "trading-system",
     instructions=(
@@ -190,7 +193,7 @@ def golden_pit_scan(use_realtime: bool = False) -> str:
                     bbi, upper, lower = compute_bbiboll(close)
                     last_close = float(close.iloc[-1])
                     last_lower = float(lower.iloc[-1])
-                    dist_pct = round((last_close - last_lower) / last_lower * 100, 1) if last_lower > 0 else 999
+                    dist_pct = round((last_close - last_lower) / last_lower * 100, 1) if last_lower > 0 else _DIST_UNAVAILABLE
                     last_date = df["date"].iloc[-1].strftime("%Y-%m-%d")
 
                     entry = {
@@ -209,7 +212,7 @@ def golden_pit_scan(use_realtime: bool = False) -> str:
 
         # 排序
         hits.sort(key=lambda x: x.get("composite", 0), reverse=True)
-        watchlist.sort(key=lambda x: x.get("dist_to_lower_pct", 999))
+        watchlist.sort(key=lambda x: x.get("dist_to_lower_pct", _DIST_UNAVAILABLE))
 
         last_date = df["date"].iloc[-1].strftime("%Y-%m-%d") if codes else "unknown"
         note = f"数据截至{last_date}"
@@ -283,7 +286,7 @@ def golden_pit_watchlist(top_n: int = 20) -> str:
                 bbi, upper, lower = compute_bbiboll(close)
                 last_close = float(close.iloc[-1])
                 last_lower = float(lower.iloc[-1])
-                dist = round((last_close - last_lower) / last_lower * 100, 1) if last_lower > 0 else 999
+                dist = round((last_close - last_lower) / last_lower * 100, 1) if last_lower > 0 else _DIST_UNAVAILABLE
                 recent_at = bool((close.tail(5) <= lower.tail(5)).any())
 
                 results.append({
