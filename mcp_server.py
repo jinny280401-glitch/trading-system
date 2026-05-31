@@ -526,6 +526,110 @@ def backtest_stock(code: str, start_date: str = "2024-01-01", end_date: str = "2
 
 
 # ============================================================
+# Tool 6: 因子扫描（完整版，支持多因子组合）
+# ============================================================
+@mcp.tool()
+def factor_scan(scan_date: str = "") -> str:
+    """完整因子扫描，支持多因子组合、权重配置、市场环境判断。
+    scan_date: 扫描日期（YYYY-MM-DD），留空为今天。
+    返回：命中股票列表 + 市场环境 + 扫描统计 + 因子配置。"""
+    try:
+        import time
+        from datetime import datetime
+        from data.provider import DataProvider
+        from factors.limit_up import LimitUpGene, BelowLimitUpPrice
+        from factors.volume import ConsecutiveDecline
+        from factors.bbiboll import BBIBOLLLowerBounce
+        from factors.consolidation import Consolidation
+        from engine.scanner import Scanner
+        from config.settings import FACTORS, SIGNAL_COMBO, FACTOR_WEIGHTS
+
+        # 构建因子列表
+        factor_map = {
+            "limit_up_gene": lambda: LimitUpGene(
+                lookback_days=FACTORS["limit_up_gene"]["lookback_days"],
+            ),
+            "below_limit_up_price": lambda: BelowLimitUpPrice(
+                lookback_days=FACTORS["below_limit_up_price"]["lookback_days"],
+            ),
+            "consecutive_decline": lambda: ConsecutiveDecline(
+                min_days=FACTORS["consecutive_decline"]["min_days"],
+                max_days=FACTORS["consecutive_decline"]["max_days"],
+                volume_shrink=FACTORS["consecutive_decline"]["volume_shrink"],
+            ),
+            "consolidation": lambda: Consolidation(
+                lookback_days=FACTORS["consolidation"]["lookback_days"],
+                max_amplitude=FACTORS["consolidation"]["max_amplitude"],
+                ma_period=FACTORS["consolidation"]["ma_period"],
+                ma_proximity=FACTORS["consolidation"]["ma_proximity"],
+                volume_shrink_ratio=FACTORS["consolidation"]["volume_shrink_ratio"],
+            ),
+            "bbiboll": lambda: BBIBOLLLowerBounce(
+                bbi_periods=FACTORS["bbiboll"]["bbi_periods"],
+                boll_period=FACTORS["bbiboll"]["boll_period"],
+                boll_std=FACTORS["bbiboll"]["boll_std"],
+                min_days_below=FACTORS["bbiboll"]["min_days_below"],
+            ),
+        }
+        factors = []
+        for name in SIGNAL_COMBO:
+            if name in factor_map:
+                f = factor_map[name]()
+                f.weight = FACTOR_WEIGHTS.get(name, 1.0)
+                factors.append(f)
+
+        provider = DataProvider()
+        scanner = Scanner(provider, factors)
+
+        t0 = time.time()
+        result = scanner.scan(scan_date or None)
+        elapsed = time.time() - t0
+
+        hits = result["hits"]
+        env = result["market_env"]
+        stats = result["stats"]
+
+        # 构建信号列表
+        signals = []
+        if not hits.empty:
+            score_cols = [c for c in hits.columns if c.endswith("_score")]
+            for _, row in hits.iterrows():
+                sig = {
+                    "code": row["code"],
+                    "name": row.get("name", ""),
+                    "close": round(row["close"], 2),
+                    "pct_chg": round(row.get("pct_chg", 0), 2),
+                    "composite_score": round(row.get("composite_score", 0), 1),
+                }
+                for sc in score_cols:
+                    sig[sc] = round(row[sc], 1)
+                signals.append(sig)
+
+        data = {
+            "scan_date": scan_date or datetime.now().strftime("%Y-%m-%d"),
+            "scan_time": datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "elapsed_seconds": round(elapsed, 1),
+            "market_env": env,
+            "stats": stats,
+            "factors_used": [f.name for f in factors],
+            "factor_weights": {f.name: f.weight for f in factors},
+            "signals": signals,
+        }
+
+        qc = _qc(
+            "success" if signals else "partial",
+            1.0 if signals else 0.5,
+            ["local_cache", "baostock"],
+            note=f"扫描{stats.get('total_stocks', '?')}只票，命中{len(signals)}只",
+        )
+
+        return _wrap(qc, json.dumps(data, ensure_ascii=False, indent=2))
+
+    except Exception as e:
+        return _error(f"factor_scan 异常: {e}")
+
+
+# ============================================================
 # 启动入口
 # ============================================================
 if __name__ == "__main__":
