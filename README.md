@@ -160,6 +160,10 @@ python3 mcp_server.py
 请用 golden_pit_scan 扫描今日黄金坑信号
 ```
 
+## 🧭 研究路由
+
+`serenity-skill` 仅用于产业链、供应链、卡点、瓶颈、主题深度调研类任务。普通个股快照、因子扫描、黄金坑初筛、快答、四重门仍走本项目原有数据链路、QC 和 Trust Gate。
+
 ---
 
 ## 📊 数据源
