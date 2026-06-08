@@ -164,6 +164,8 @@ python3 mcp_server.py
 
 `serenity-skill` 仅用于产业链、供应链、卡点、瓶颈、主题深度调研类任务。普通个股快照、因子扫描、黄金坑初筛、快答、四重门仍走本项目原有数据链路、QC 和 Trust Gate。
 
+在 Finance Suite / trading-system 体系内，`serenity-skill` 被分类为 **Methodology Consumer**。它不持有 Provider 注册、不参与 QC、不参与 Trust Gate、不修改 ReportAssembly；产出仅作为 research partner 的对话素材和核验清单，最终研究编排权属于 Research Runtime。
+
 ---
 
 ## 📊 数据源
