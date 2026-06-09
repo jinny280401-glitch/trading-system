@@ -20,6 +20,7 @@
 
 import sys
 import time
+from datetime import datetime
 import pandas as pd
 from data.provider import DataProvider
 from factors.limit_up import LimitUpGene, BelowLimitUpPrice
@@ -242,9 +243,13 @@ def cmd_warmup():
         & (snapshot['market_cap'] > 2_000_000_000)
     ]['code'].tolist()
 
+    start_date = "2024-01-01"
+    end_date = datetime.now().strftime("%Y-%m-%d")
+
     print(f"开始预热 {len(codes)} 只股票的历史数据...")
+    print(f"预热区间: {start_date} ~ {end_date}")
     t0 = time.time()
-    provider.batch_load(codes, "2024-01-01", "2025-04-03")
+    provider.batch_load(codes, start_date, end_date)
     print(f"预热完成！耗时 {time.time()-t0:.0f}秒")
 
 
