@@ -1,4 +1,12 @@
-# Golden Pit Experiment v0.2 — Final Smoke Evidence Report
+# Golden Pit Experiment v0.2 — Gate Boundary Audit
+
+---
+Document Role:
+Gate-centric evidence boundary audit.
+This document complements:
+FINAL_SMOKE_EVIDENCE_REPORT_v0.1.md
+It is not the experiment final report.
+---
 
 > Date: `2026-07-23` (Asia/Shanghai)  
 > Status: `FINAL / WINDOW CLOSED`  
